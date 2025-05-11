@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net"
-	"os"
 )
 
 func main() {
+	// listen on default redis TCP port
 	l, err := net.Listen("tcp", ":6379")
 	if err != nil {
 		fmt.Println(err)
@@ -21,17 +20,16 @@ func main() {
 
 	defer connection.Close()
 
+	//start infinite loop, to read bytes from connection
 	for {
-		buf := make([]byte, 1024)
-
-		_, err = connection.Read(buf)
+		resp := NewResp(connection)
+		value, err := resp.Read()
 		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			fmt.Println("error reading from client: ", err.Error())
-			os.Exit(1)
+			fmt.Println(err)
+			return
 		}
+
+		fmt.Println(value)
 
 		// ignore request
 		connection.Write([]byte("+OK\r\n"))
